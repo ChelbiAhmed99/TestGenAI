@@ -1,0 +1,15 @@
+{
+  "name": "saucedemo-golden-path-tests",
+  "version": "1.0.0",
+  "description": "Golden path test reference template using Gherkin + POM with Playwright and TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "show-report": "npx playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "typescript": "^5.0.0"
+  }
+}
