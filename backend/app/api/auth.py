@@ -8,6 +8,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
 
+ALLOWED_SELF_REGISTER_ROLES = {"qa", "manager", "guest"}
+
 @router.post("/register", response_model=schemas.User)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
@@ -18,16 +20,28 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if db_user_name:
         raise HTTPException(status_code=400, detail="Username already registered")
 
+    # Determine the requested role — block admin self-registration
+    requested_role = (user.role or "qa").lower().strip()
+    if requested_role == "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin registration is not allowed. Only one admin exists on this platform."
+        )
+    if requested_role not in ALLOWED_SELF_REGISTER_ROLES:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Allowed roles: {', '.join(ALLOWED_SELF_REGISTER_ROLES)}")
+
+    try:
+        role_enum = models.UserRole(requested_role)
+    except ValueError:
+        role_enum = models.UserRole.QA
+
     hashed_password = get_password_hash(user.password)
-    # Users registering via the portal always get the QA role by default.
-    # The unique admin is seeded on startup.
-    role = models.UserRole.QA
 
     new_user = models.User(
         username=user.username,
         email=user.email,
         hashed_password=hashed_password,
-        role=role
+        role=role_enum
     )
     db.add(new_user)
     db.commit()

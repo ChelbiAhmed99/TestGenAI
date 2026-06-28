@@ -22,7 +22,7 @@ import UserManagement from './components/UserManagement';
 const NAV_ITEMS = [
   {
     group: 'Core',
-    roles: ['admin', 'qa', 'user'],
+    roles: ['admin', 'qa', 'manager'],
     items: [
       { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard', badge: null },
       { id: 'requirements', path: '/requirements', icon: FileText, label: 'Requirements', badge: null },
@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   },
   {
     group: 'Quality & Admin',
-    roles: ['admin', 'qa'],
+    roles: ['admin', 'qa', 'manager'],
     items: [
       { id: 'matrix', path: '/matrix', icon: GitBranch, label: 'Traceability Matrix', badge: null },
       { id: 'execution', path: '/execution', icon: History, label: 'Execution History', badge: null },
@@ -46,7 +46,7 @@ const NAV_ITEMS = [
   },
   {
     group: 'Help',
-    roles: ['admin', 'qa', 'user', 'guest'],
+    roles: ['admin', 'qa', 'manager', 'guest'],
     items: [
       { id: 'documentation', path: '/documentation', icon: Book, label: 'Documentation', badge: null },
     ]
@@ -215,7 +215,7 @@ function App() {
         </nav>
 
         {/* Bottom: Settings + User */}
-        {['admin', 'qa'].includes((currentUser.role || 'user').toLowerCase()) && (
+        {['admin', 'qa', 'manager'].includes((currentUser.role || 'user').toLowerCase()) && (
           <div className="px-3 py-3 space-y-0.5" style={{ borderTop: '1px solid var(--border-color)' }}>
             <NavLink
               to="/settings"

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Mail, ArrowRight, User, ShieldCheck, CheckCircle2, Zap, Sun, Moon } from 'lucide-react';
+import { Lock, Mail, ArrowRight, User, ShieldCheck, CheckCircle2, Zap, Sun, Moon, Briefcase, ChevronDown } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useTheme } from '../hooks/ThemeContext';
 
@@ -10,6 +10,7 @@ export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [selectedRole, setSelectedRole] = useState('qa');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { isDark, toggleTheme } = useTheme();
@@ -23,7 +24,7 @@ export default function Login({ onLogin }) {
         const data = await apiService.forgotPassword(email);
         setError(data.message || 'Password reset link sent.');
       } else if (isRegister) {
-        await apiService.register(username, email, password);
+        await apiService.register(username, email, password, selectedRole);
         setIsRegister(false);
         setError('Registration successful. Please login.');
       } else {
@@ -42,6 +43,12 @@ export default function Login({ onLogin }) {
   const inputCls = "w-full pl-12 pr-4 py-3.5 rounded-xl text-[14px] focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all font-semibold";
   const labelStyle = { color: 'var(--text-muted)' };
   const iconStyle = { color: 'var(--text-muted)' };
+
+  const REGISTER_ROLES = [
+    { value: 'qa', label: 'QA Engineer', desc: 'Full access to testing, scenarios & executions', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    { value: 'manager', label: 'Manager', desc: 'View dashboards, reports & traceability', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+    { value: 'guest', label: 'Guest', desc: 'Read-only access to documentation', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+  ];
 
   const features = [
     { icon: Zap, text: 'Instant Gherkin & Playwright TS Generation' },
@@ -161,6 +168,35 @@ export default function Login({ onLogin }) {
                     <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputCls} tracking-widest placeholder:tracking-normal`} style={inputStyle} placeholder="••••••••" required />
                   </div>
                 </div>
+                {isRegister && (
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest mb-2 ml-1" style={labelStyle}>Role</label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {REGISTER_ROLES.map((r) => (
+                        <button
+                          key={r.value}
+                          type="button"
+                          onClick={() => setSelectedRole(r.value)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                            selectedRole === r.value
+                              ? `${r.bg} ring-2 ring-offset-0 ring-current ${r.color}`
+                              : 'hover:border-red-500/30'
+                          }`}
+                          style={selectedRole === r.value ? {} : { background: 'var(--bg-input)', borderColor: 'var(--border-color)' }}
+                        >
+                          <Briefcase className={`w-4 h-4 flex-shrink-0 ${selectedRole === r.value ? r.color : ''}`} style={selectedRole !== r.value ? iconStyle : {}} />
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-[13px] font-bold ${selectedRole === r.value ? r.color : ''}`} style={selectedRole !== r.value ? { color: 'var(--text-primary)' } : {}}>{r.label}</div>
+                            <div className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{r.desc}</div>
+                          </div>
+                          {selectedRole === r.value && (
+                            <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${r.color}`} />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
             <button type="submit" disabled={isLoading} className="w-full mt-8 py-3.5 px-4 primary-gradient rounded-xl font-bold text-[14px] text-white transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70 hover:opacity-90">

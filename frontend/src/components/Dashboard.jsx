@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, CheckCircle2, XCircle, Clock, FileText, Play, Zap, TrendingUp, Activity, AlertTriangle, BarChart3, Target, Layers, FolderDot, GitBranch, Loader2 } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, XCircle, Clock, FileText, Play, Zap, TrendingUp, Activity, AlertTriangle, BarChart3, Target, Layers, FolderDot, GitBranch, Loader2, Shield } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { apiService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
