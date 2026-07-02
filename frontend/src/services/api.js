@@ -268,7 +268,23 @@ export const apiService = {
 
   // ── Reports & CI ────────────────────────────────────────────────────────
   async exportReport(projectId) {
-    window.open(`${API_BASE_URL}/reports/export/${projectId || 1}`, '_blank');
+    const r = await fetch(`${API_BASE_URL}/reports/export/${projectId || 1}`, { headers: authHeaders() });
+    if (r.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/';
+      throw new Error('Session expired. Please login again.');
+    }
+    if (!r.ok) throw new Error(`Export failed (${r.status})`);
+    
+    const blob = await r.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SmartTestAccelerator_Report_${projectId || 1}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
   },
 
   async exportGitlabCI() {
@@ -285,6 +301,37 @@ export const apiService = {
         project_name: projectName || undefined,
         gitlab_namespace: namespace || undefined,
       }),
+    });
+    return handleResponse(r);
+  },
+
+  // ── AI Review (Valider/Review workflow) ──────────────────────────────────
+  async reviewScenario(content, prompt) {
+    const r = await fetch(`${API_BASE_URL}/ai/review-scenario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ content, prompt, type: 'gherkin' }),
+    });
+    return handleResponse(r);
+  },
+
+  async reviewCode(content, prompt) {
+    const r = await fetch(`${API_BASE_URL}/ai/review-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ content, prompt, type: 'code' }),
+    });
+    return handleResponse(r);
+  },
+
+  // ── PDF Upload ──────────────────────────────────────────────────────────
+  async uploadPdf(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const r = await fetch(`${API_BASE_URL}/ingest/upload-pdf`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
     });
     return handleResponse(r);
   },

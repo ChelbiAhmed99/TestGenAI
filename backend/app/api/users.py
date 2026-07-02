@@ -5,13 +5,14 @@ from typing import List
 from app.core.database import get_db
 from app.models import models
 from app.schemas import schemas
-from app.core.dependencies import require_admin
+from app.core.dependencies import require_admin, get_current_user
 from app.core.security import get_password_hash
 
 router = APIRouter()
 
 @router.get("/", response_model=List[schemas.User])
-def get_users(db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+def get_users(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """All authenticated users can view the user list (read-only consultation)."""
     return db.query(models.User).all()
 
 @router.post("/", response_model=schemas.User)
@@ -27,7 +28,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current
     hashed_password = get_password_hash(user.password)
     
     # Map role string to enum
-    role_enum = models.UserRole.QA
+    role_enum = models.UserRole.QA_DEVELOPER
     try:
         if user.role:
             role_enum = models.UserRole(user.role.lower())

@@ -185,7 +185,7 @@ export default function RequirementList({ onAnalyze }) {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleAnalyze(req)} className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold text-[var(--text-primary)] primary-gradient rounded-xl transition-all active:scale-95 hover:opacity-90">
+                          <button onClick={() => handleAnalyze(req)} className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold text-white primary-gradient rounded-xl transition-all active:scale-95 hover:opacity-90">
                             <Zap className="w-3.5 h-3.5" />Analyze
                           </button>
                           <button onClick={() => { setEditingId(req.id); setEditTitle(req.title); }} className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all border border-transparent hover:border-[var(--border-color)]">

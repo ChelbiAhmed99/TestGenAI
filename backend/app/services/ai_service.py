@@ -319,4 +319,13 @@ class AIService:
             "errors": result.final_errors,
         }
 
+    async def call_llm(self, prompt: str, model_override: Optional[str] = None, api_key_override: Optional[str] = None) -> str:
+        """Generic LLM call for review/optimization prompts."""
+        llm = self._get_llm(temperature=0.2, timeout=60, model_override=model_override, api_key_override=api_key_override)
+        response = await llm.ainvoke([HumanMessage(content=prompt)])
+        content = response.content
+        content = re.sub(r"```(gherkin|typescript|ts|json)?\n", "", content)
+        content = content.replace("```", "").strip()
+        return content
+
 ai_service = AIService()

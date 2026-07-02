@@ -7,9 +7,9 @@ from app.core.database import Base
 
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
-    QA = "qa"
+    QA_DEVELOPER = "qa_developer"
     MANAGER = "manager"
-    GUEST = "guest"
+    USER = "user"
 
 class RequirementType(str, enum.Enum):
     USER_STORY = "USER_STORY"
@@ -28,7 +28,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    role = Column(Enum(UserRole), default=UserRole.QA)
+    role = Column(Enum(UserRole), default=UserRole.QA_DEVELOPER)
     projects = relationship("Project", back_populates="owner")
 
 class Project(Base):

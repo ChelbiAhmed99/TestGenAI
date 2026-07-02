@@ -12,6 +12,7 @@ from app.services.report_service import report_service
 from fastapi.responses import Response
 from datetime import datetime, timedelta
 from pydantic import BaseModel
+from app.core.dependencies import get_current_user, require_admin
 
 router = APIRouter()
 
@@ -24,32 +25,49 @@ def get_ai_overrides(
     return {"model_override": x_ai_model, "api_key_override": api_key}
 
 @router.get("/reports/export/{project_id}")
-async def export_report(project_id: int, db: Session = Depends(get_db)):
-    # Fetch some dummy results for the report
-    results = [
-        {"name": "Auth Test", "status": "Passed", "duration": 4},
-        {"name": "Payment Test", "status": "Failed", "duration": 12},
-    ]
-    pdf_content = report_service.generate_pdf_report(results)
+async def export_report(project_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    # Fetch real execution results linked to this project
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    project_name = project.name if project else "Unknown Project"
+
+    results = []
+    if project:
+        for req in project.requirements:
+            for sc in req.scenarios:
+                for ts in sc.test_scripts:
+                    for er in ts.results:
+                        results.append({
+                            "id": er.id,
+                            "name": f"{sc.title} (Script #{ts.id})",
+                            "status": er.status.value if hasattr(er.status, 'value') else er.status,
+                            "duration": er.duration or 0,
+                            "kpis": er.kpis or {},
+                        })
+
+    if not results:
+        # Provide minimal fallback so the PDF isn't empty
+        results = [{"id": 0, "name": "No test executions yet", "status": "pending", "duration": 0, "kpis": {}}]
+
+    pdf_content = report_service.generate_pdf_report(results, project_name=project_name)
     return Response(
         content=pdf_content,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=TestGenAI_Report_{project_id}.pdf"}
+        headers={"Content-Disposition": f"attachment; filename=SmartTestAccelerator_Report_{project_id}.pdf"}
     )
 
 @router.get("/reports")
-async def get_all_reports(db: Session = Depends(get_db)):
+async def get_all_reports(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return db.query(models.ExecutionResult).all()
 
 @router.get("/reports/{run_id}")
-async def get_report_by_run_id(run_id: int, db: Session = Depends(get_db)):
+async def get_report_by_run_id(run_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     result = db.query(models.ExecutionResult).filter(models.ExecutionResult.id == run_id).first()
     if not result:
         raise HTTPException(status_code=404, detail="Report not found")
     return result
 
 @router.post("/execute/{script_id}")
-async def execute_test(script_id: int, db: Session = Depends(get_db)):
+async def execute_test(script_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     script = db.query(models.TestScript).filter(models.TestScript.id == script_id).first()
     if not script:
         raise HTTPException(status_code=404, detail="Script not found")
@@ -72,11 +90,11 @@ async def execute_test(script_id: int, db: Session = Depends(get_db)):
     return result
 
 @router.post("/execution/run/{project_id}")
-async def run_project_execution(project_id: int, db: Session = Depends(get_db)):
+async def run_project_execution(project_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return {"status": "Execution started", "project_id": project_id, "run_id": 1}
 
 @router.get("/execution/results/{run_id}")
-async def get_execution_results_by_run_id(run_id: int, db: Session = Depends(get_db)):
+async def get_execution_results_by_run_id(run_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     result = db.query(models.ExecutionResult).filter(models.ExecutionResult.id == run_id).first()
     if not result:
         raise HTTPException(status_code=404, detail="Execution result not found")
@@ -88,7 +106,8 @@ async def upload_requirement(
     content: str,
     type: str,
     project_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     # Normalize type (e.g. user-story -> USER_STORY)
     normalized_type = type.replace("-", "_").upper()
@@ -109,7 +128,8 @@ async def upload_requirement(
 async def update_requirement(
     requirement_id: int,
     req: schemas.RequirementUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     db_req = db.query(models.Requirement).filter(models.Requirement.id == requirement_id).first()
     if not db_req:
@@ -127,7 +147,7 @@ async def update_requirement(
     return db_req
 
 @router.delete("/requirements/{requirement_id}")
-async def delete_requirement(requirement_id: int, db: Session = Depends(get_db)):
+async def delete_requirement(requirement_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     db_req = db.query(models.Requirement).filter(models.Requirement.id == requirement_id).first()
     if not db_req:
         raise HTTPException(status_code=404, detail="Requirement not found")
@@ -137,7 +157,7 @@ async def delete_requirement(requirement_id: int, db: Session = Depends(get_db))
     return {"status": "deleted", "id": requirement_id}
 
 @router.post("/analyze/{requirement_id}")
-async def analyze_requirement(requirement_id: int, db: Session = Depends(get_db), ai_opts: dict = Depends(get_ai_overrides)):
+async def analyze_requirement(requirement_id: int, db: Session = Depends(get_db), ai_opts: dict = Depends(get_ai_overrides), current_user: models.User = Depends(get_current_user)):
     requirement = db.query(models.Requirement).filter(models.Requirement.id == requirement_id).first()
     if not requirement:
         raise HTTPException(status_code=404, detail="Requirement not found")
@@ -279,7 +299,7 @@ class GitLabPushRequest(BaseModel):
     gitlab_namespace: Optional[str] = None
 
 @router.post("/gitlab/push")
-async def push_to_gitlab(req: GitLabPushRequest, db: Session = Depends(get_db)):
+async def push_to_gitlab(req: GitLabPushRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """
     Creates a new GitLab repository and pushes the full Playwright TypeScript
     project (POM + feature files + CI pipeline) in a single commit.
@@ -475,7 +495,7 @@ async def generate_pipeline(tool: str = "gitlab"):
     return {"yaml": "stages:\n  - test\n  - report\n\nrun_automation:\n  stage: test\n  image: mcr.microsoft.com/playwright:v1.44.0-jammy\n  script:\n    - npm ci\n    - npx playwright install --with-deps\n    - npx playwright test\n"}
 
 @router.get("/projects", response_model=List[schemas.Project])
-async def get_projects(db: Session = Depends(get_db)):
+async def get_projects(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return db.query(models.Project).all()
 
 from app.core.github_integration import generate_playwright_project
@@ -508,7 +528,7 @@ async def create_github_project(project: schemas.GithubProjectCreate, db: Sessio
     return {"status": "success", "github_url": repo_url, "project": db_project.id}
 
 @router.get("/dashboard/projects", response_model=List[schemas.ProjectDashboard])
-async def get_dashboard_projects(db: Session = Depends(get_db)):
+async def get_dashboard_projects(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     projects = db.query(models.Project).all()
     result = []
     for p in projects:
@@ -534,22 +554,22 @@ async def get_dashboard_projects(db: Session = Depends(get_db)):
             "last_execution_status": latest_status.capitalize() if latest_status != "Unknown" else "Unknown"
         })
     # Sort by created_at descending (newest first)
-    result.sort(key=lambda x: x["created_at"] or datetime.datetime.min, reverse=True)
+    result.sort(key=lambda x: x["created_at"] or datetime.min, reverse=True)
     return result
 
 @router.get("/requirements", response_model=List[schemas.Requirement])
-async def get_requirements(db: Session = Depends(get_db)):
+async def get_requirements(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return db.query(models.Requirement).order_by(models.Requirement.created_at.desc()).all()
 
 @router.get("/scenarios", response_model=List[schemas.Scenario])
-async def get_scenarios(requirement_id: int = None, db: Session = Depends(get_db)):
+async def get_scenarios(requirement_id: int = None, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     query = db.query(models.Scenario)
     if requirement_id:
         query = query.filter(models.Scenario.requirement_id == requirement_id)
     return query.all()
 
 @router.put("/scenarios/{scenario_id}", response_model=schemas.Scenario)
-async def update_scenario(scenario_id: int, payload: schemas.ScenarioUpdate, db: Session = Depends(get_db)):
+async def update_scenario(scenario_id: int, payload: schemas.ScenarioUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     scenario = db.query(models.Scenario).filter(models.Scenario.id == scenario_id).first()
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -561,7 +581,7 @@ async def update_scenario(scenario_id: int, payload: schemas.ScenarioUpdate, db:
 from app.services.ai_service import ai_service
 
 @router.post("/scenarios/{scenario_id}/generate-code")
-async def generate_scenario_code(scenario_id: int, db: Session = Depends(get_db), ai_opts: dict = Depends(get_ai_overrides)):
+async def generate_scenario_code(scenario_id: int, db: Session = Depends(get_db), ai_opts: dict = Depends(get_ai_overrides), current_user: models.User = Depends(get_current_user)):
     scenario = db.query(models.Scenario).filter(models.Scenario.id == scenario_id).first()
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -603,7 +623,7 @@ async def generate_scenario_code(scenario_id: int, db: Session = Depends(get_db)
 import httpx
 
 @router.post("/scenarios/{scenario_id}/push-github")
-async def push_scenario_to_github(scenario_id: int, db: Session = Depends(get_db)):
+async def push_scenario_to_github(scenario_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     github_token = os.environ.get("GITHUB_TOKEN")
     if not github_token:
         raise HTTPException(status_code=400, detail="GITHUB_TOKEN is not configured in the environment.")
@@ -699,14 +719,14 @@ async def github_webhook_execution_result(payload: schemas.GithubWebhookPayload,
     return {"status": "success"}
 
 @router.get("/scripts/{scenario_id}", response_model=schemas.TestScript)
-async def get_script(scenario_id: int, db: Session = Depends(get_db)):
+async def get_script(scenario_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     script = db.query(models.TestScript).filter(models.TestScript.scenario_id == scenario_id).first()
     if not script:
         raise HTTPException(status_code=404, detail="Script not found")
     return script
 
 @router.get("/executions")
-async def get_executions(db: Session = Depends(get_db)):
+async def get_executions(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     results = db.query(models.ExecutionResult).order_by(models.ExecutionResult.created_at.desc()).all()
     # Add executed_at alias for frontend compatibility
     output = []
@@ -725,7 +745,7 @@ async def get_executions(db: Session = Depends(get_db)):
     return output
 
 @router.delete("/scenarios/{scenario_id}")
-async def delete_scenario(scenario_id: int, db: Session = Depends(get_db)):
+async def delete_scenario(scenario_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     scenario = db.query(models.Scenario).filter(models.Scenario.id == scenario_id).first()
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -734,7 +754,7 @@ async def delete_scenario(scenario_id: int, db: Session = Depends(get_db)):
     return {"status": "deleted", "id": scenario_id}
 
 @router.get("/traceability")
-async def get_traceability_matrix(db: Session = Depends(get_db)):
+async def get_traceability_matrix(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     # Complex join for traceability
     results = db.query(
         models.Requirement.title.label("req_title"),
@@ -749,10 +769,16 @@ async def get_traceability_matrix(db: Session = Depends(get_db)):
     return [dict(r._mapping) for r in results]
 
 @router.get("/dashboard/stats")
-async def get_dashboard_stats(db: Session = Depends(get_db)):
-    total_passed = db.query(models.ExecutionResult).filter(models.ExecutionResult.status == "passed").count()
-    total_failed = db.query(models.ExecutionResult).filter(models.ExecutionResult.status == "failed").count()
+async def get_dashboard_stats(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    total_passed = db.query(models.ExecutionResult).filter(models.ExecutionResult.status == models.ExecutionStatus.PASSED).count()
+    total_failed = db.query(models.ExecutionResult).filter(models.ExecutionResult.status == models.ExecutionStatus.FAILED).count()
     total_tests = total_passed + total_failed
+    
+    # Counts for KPI cards
+    total_projects = db.query(models.Project).count()
+    total_requirements = db.query(models.Requirement).count()
+    total_scenarios = db.query(models.Scenario).count()
+    total_scripts = db.query(models.TestScript).count()
     
     # Real chart data from past 7 days
     chart_data = []
@@ -760,11 +786,11 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
         passed_count = db.query(models.ExecutionResult).filter(
-            models.ExecutionResult.status == "passed",
+            models.ExecutionResult.status == models.ExecutionStatus.PASSED,
             func.date(models.ExecutionResult.created_at) == day
         ).count()
         failed_count = db.query(models.ExecutionResult).filter(
-            models.ExecutionResult.status == "failed",
+            models.ExecutionResult.status == models.ExecutionStatus.FAILED,
             func.date(models.ExecutionResult.created_at) == day
         ).count()
         chart_data.append({
@@ -778,11 +804,15 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
         "total_passed": total_passed,
         "total_failed": total_failed,
         "accuracy": 99.4 if total_tests == 0 else round((total_passed / total_tests) * 100, 1),
+        "total_projects": total_projects,
+        "total_requirements": total_requirements,
+        "total_scenarios": total_scenarios,
+        "total_scripts": total_scripts,
         "chart_data": chart_data
     }
 
 @router.get("/dashboard/activity")
-async def get_activity_feed(db: Session = Depends(get_db)):
+async def get_activity_feed(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     # Fetch recent executions
     executions = db.query(models.ExecutionResult).order_by(models.ExecutionResult.created_at.desc()).limit(3).all()
     feed = []
@@ -794,13 +824,14 @@ async def get_activity_feed(db: Session = Depends(get_db)):
             if scenario:
                 scenario_title = scenario.title
 
+        ex_status = ex.status.value if hasattr(ex.status, 'value') else ex.status
         feed.append({
             "user": "System Agent",
             "action": "Executed test suite",
             "target": scenario_title,
             "time": ex.created_at.strftime("%Y-%m-%d %H:%M"),
-            "icon": "CheckCircle2" if ex.status == "passed" else "XCircle",
-            "color": "green" if ex.status == "passed" else "red"
+            "icon": "CheckCircle2" if ex_status == "passed" else "XCircle",
+            "color": "green" if ex_status == "passed" else "red"
         })
         
     if not feed:
@@ -849,3 +880,114 @@ generate_allure_report:
         media_type="application/x-yaml",
         headers={"Content-Disposition": "attachment; filename=.gitlab-ci.yml"}
     )
+
+
+# ── AI Review Endpoints (Valider/Review workflow) ─────────────────────────
+
+class ReviewRequest(BaseModel):
+    content: str
+    prompt: str
+    type: str = "gherkin"  # "gherkin" or "code"
+
+@router.post("/ai/review-scenario")
+async def review_scenario(
+    req: ReviewRequest,
+    db: Session = Depends(get_db),
+    overrides: dict = Depends(get_ai_overrides)
+):
+    """AI-powered scenario review: takes existing Gherkin + user prompt, returns improved version."""
+    review_prompt = f"""You are a QA expert. The user wants to improve the following Gherkin scenario.
+
+Current Gherkin:
+```gherkin
+{req.content}
+```
+
+User's review instructions:
+{req.prompt}
+
+Return ONLY the improved Gherkin scenario (no explanations). Keep the Feature/Scenario/Given/When/Then format.
+"""
+    try:
+        result = await ai_service.call_llm(
+            review_prompt,
+            model_override=overrides.get("model_override"),
+            api_key_override=overrides.get("api_key_override")
+        )
+        return {"improved_content": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ai/review-code")
+async def review_code(
+    req: ReviewRequest,
+    db: Session = Depends(get_db),
+    overrides: dict = Depends(get_ai_overrides)
+):
+    """AI-powered code review: takes existing Playwright code + user prompt, returns improved version."""
+    review_prompt = f"""You are a senior test automation engineer expert in Playwright with TypeScript.
+The user wants to improve the following test code.
+
+Current Code:
+```typescript
+{req.content}
+```
+
+User's review instructions:
+{req.prompt}
+
+Return ONLY the improved TypeScript Playwright code (no explanations). Use Page Object Model pattern.
+"""
+    try:
+        result = await ai_service.call_llm(
+            review_prompt,
+            model_override=overrides.get("model_override"),
+            api_key_override=overrides.get("api_key_override")
+        )
+        return {"improved_content": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── PDF Upload Endpoint ────────────────────────────────────────────────────
+
+@router.post("/ingest/upload-pdf")
+async def upload_pdf(file: UploadFile = File(...)):
+    """Extract text from uploaded PDF and return it for requirement creation."""
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+    
+    content = await file.read()
+    
+    # Try to extract text using available PDF library
+    extracted_text = ""
+    try:
+        import io
+        try:
+            from PyPDF2 import PdfReader
+            reader = PdfReader(io.BytesIO(content))
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    extracted_text += text + "\n"
+        except ImportError:
+            # Fallback: try pdfminer
+            try:
+                from pdfminer.high_level import extract_text as pdfminer_extract
+                extracted_text = pdfminer_extract(io.BytesIO(content))
+            except ImportError:
+                # Last fallback: decode as text
+                extracted_text = content.decode('utf-8', errors='ignore')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse PDF: {str(e)}")
+    
+    if not extracted_text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract text from the PDF")
+    
+    return {
+        "filename": file.filename,
+        "extracted_text": extracted_text.strip(),
+        "char_count": len(extracted_text.strip())
+    }
+

@@ -79,14 +79,14 @@ export default function Settings() {
       <motion.div variants={itemAnim} className="card p-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl primary-gradient flex items-center justify-center shadow-lg shadow-red-500/20">
-            <SettingsIcon className="w-6 h-6 text-[var(--text-primary)]" />
+            <SettingsIcon className="w-6 h-6 text-white" />
           </div>
           <div>
             <h2 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Platform Settings</h2>
             <p className="text-sm text-[var(--text-secondary)] mt-0.5">Configure AI engines, integrations, and preferences</p>
           </div>
         </div>
-        <button onClick={handleSave} className="hidden sm:flex items-center gap-2 px-5 py-2.5 primary-gradient rounded-xl text-sm font-bold text-[var(--text-primary)] transition-all hover:opacity-90 active:scale-[0.98]">
+        <button onClick={handleSave} className="hidden sm:flex items-center gap-2 px-5 py-2.5 primary-gradient rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]">
           <Save className="w-4 h-4" /> Save All
         </button>
       </motion.div>
@@ -101,7 +101,7 @@ export default function Settings() {
               {MODELS.map((m) => (
                 <button key={m.id} onClick={() => update('aiModel', m.id)}
                   className={`relative p-4 rounded-xl text-left transition-all border-2 ${settings.aiModel === m.id ? 'border-red-500/50 bg-red-500/5' : 'border-[var(--border-color)] bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)]'}`}>
-                  {settings.aiModel === m.id && <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center"><CheckCircle2 className="w-3 h-3 text-[var(--text-primary)]" /></div>}
+                  {settings.aiModel === m.id && <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center"><CheckCircle2 className="w-3 h-3 text-white" /></div>}
                   <div className="text-[14px] font-bold text-[var(--text-primary)]">{m.label}</div>
                   <div className="text-[12px] text-[var(--text-muted)] mt-1">{m.desc}</div>
                   {m.badge && <span className="inline-block mt-2 text-[10px] font-black uppercase tracking-wider text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">{m.badge}</span>}
@@ -175,7 +175,7 @@ export default function Settings() {
 
       {/* Mobile Save */}
       <motion.div variants={itemAnim} className="sm:hidden">
-        <button onClick={handleSave} className="w-full py-4 primary-gradient rounded-xl text-sm font-bold text-[var(--text-primary)] flex items-center justify-center gap-2 active:scale-[0.98]">
+        <button onClick={handleSave} className="w-full py-4 primary-gradient rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 active:scale-[0.98]">
           <Save className="w-4 h-4" /> Save All Settings
         </button>
       </motion.div>

@@ -15,4 +15,5 @@ requests
 python-dotenv
 aiofiles
 reportlab
+PyPDF2
 alembic

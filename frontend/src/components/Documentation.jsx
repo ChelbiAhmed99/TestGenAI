@@ -20,9 +20,9 @@ export default function Documentation() {
         return (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             <div>
-              <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tight mb-4">Bienvenue sur Devoteam TestGenAI</h2>
+              <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tight mb-4">Bienvenue sur Devoteam Smart Test Accelerator</h2>
               <p className="text-[15px] leading-relaxed text-[var(--text-secondary)]">
-                La plateforme <strong>Devoteam TestGenAI</strong> est un accélérateur conçu pour transformer instantanément vos spécifications métier (User Stories, Swagger, PDF) en une suite de tests automatisés prête à l'emploi.
+                La plateforme <strong>Devoteam Smart Test Accelerator</strong> est un accélérateur conçu pour transformer instantanément vos spécifications métier (User Stories, Swagger, PDF) en une suite de tests automatisés prête à l'emploi.
               </p>
               <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] mt-4">
                 Grâce à notre moteur basé sur l'IA (LLM Gemini Flash), vous pouvez réduire le temps d'automatisation de plusieurs jours à quelques secondes, tout en respectant les standards de l'industrie (Page Object Model, BDD).

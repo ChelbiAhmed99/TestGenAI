@@ -10,7 +10,7 @@ export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [selectedRole, setSelectedRole] = useState('qa');
+  const [selectedRole, setSelectedRole] = useState('qa_developer');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { isDark, toggleTheme } = useTheme();
@@ -45,9 +45,9 @@ export default function Login({ onLogin }) {
   const iconStyle = { color: 'var(--text-muted)' };
 
   const REGISTER_ROLES = [
-    { value: 'qa', label: 'QA Engineer', desc: 'Full access to testing, scenarios & executions', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    { value: 'qa_developer', label: 'QA Developer', desc: 'Full access to testing, scenarios & code generation', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
     { value: 'manager', label: 'Manager', desc: 'View dashboards, reports & traceability', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-    { value: 'guest', label: 'Guest', desc: 'Read-only access to documentation', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+    { value: 'user', label: 'User', desc: 'Read-only consultation access', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
   ];
 
   const features = [
@@ -73,7 +73,7 @@ export default function Login({ onLogin }) {
             </div>
             <div>
               <span className="text-xl font-black tracking-tight leading-none block" style={{ color: 'var(--text-primary)' }}>Devoteam</span>
-              <span className="text-[10px] font-bold text-red-400 tracking-widest uppercase block mt-0.5">TestGenAI Platform</span>
+              <span className="text-[10px] font-bold text-red-400 tracking-widest uppercase block mt-0.5">Smart Test Accelerator</span>
             </div>
           </div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>

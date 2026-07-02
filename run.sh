@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== TestGenAI Development Environment Launcher ===${NC}"
+echo -e "${GREEN}=== Smart Test Accelerator Development Environment Launcher ===${NC}"
 
 # Check if .env file exists, copy example if not
 if [ ! -f .env ]; then
@@ -51,10 +51,10 @@ if [ "$MODE" == "docker" ]; then
 fi
 
 if [ "$MODE" == "docker" ]; then
-  echo -e "${GREEN}[INFO] Launching TestGenAI via Docker Compose...${NC}"
+  echo -e "${GREEN}[INFO] Launching Smart Test Accelerator via Docker Compose...${NC}"
   docker-compose up --build
 else
-  echo -e "${GREEN}[INFO] Launching TestGenAI locally...${NC}"
+  echo -e "${GREEN}[INFO] Launching Smart Test Accelerator locally...${NC}"
   
   # Setup Core AI Engine
   echo -e "${YELLOW}[1/6] Preparing Core AI Engine environment...${NC}"

@@ -22,7 +22,7 @@ import UserManagement from './components/UserManagement';
 const NAV_ITEMS = [
   {
     group: 'Core',
-    roles: ['admin', 'qa', 'manager'],
+    roles: ['admin', 'qa_developer', 'manager', 'user'],
     items: [
       { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard', badge: null },
       { id: 'requirements', path: '/requirements', icon: FileText, label: 'Requirements', badge: null },
@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   },
   {
     group: 'Quality & Admin',
-    roles: ['admin', 'qa', 'manager'],
+    roles: ['admin', 'qa_developer', 'manager', 'user'],
     items: [
       { id: 'matrix', path: '/matrix', icon: GitBranch, label: 'Traceability Matrix', badge: null },
       { id: 'execution', path: '/execution', icon: History, label: 'Execution History', badge: null },
@@ -39,14 +39,14 @@ const NAV_ITEMS = [
   },
   {
     group: 'Security',
-    roles: ['admin'],
+    roles: ['admin', 'qa_developer', 'manager', 'user'],
     items: [
       { id: 'users', path: '/users', icon: Shield, label: 'User Management', badge: null },
     ]
   },
   {
     group: 'Help',
-    roles: ['admin', 'qa', 'manager', 'guest'],
+    roles: ['admin', 'qa_developer', 'manager', 'user'],
     items: [
       { id: 'documentation', path: '/documentation', icon: Book, label: 'Documentation', badge: null },
     ]
@@ -97,8 +97,8 @@ function App() {
   useEffect(() => {
     const page = PAGE_TITLES[location.pathname];
     document.title = page
-      ? `${page.title} — Devoteam · TestGenAI`
-      : 'Devoteam · TestGenAI Platform';
+      ? `${page.title} — Devoteam · Smart Test Accelerator`
+      : 'Devoteam · Smart Test Accelerator';
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -155,7 +155,7 @@ function App() {
             </div>
             <div className="text-left">
               <div className="text-[17px] font-black tracking-tight leading-none" style={{ color: 'var(--text-primary)' }}>Devoteam</div>
-              <div className="text-[10px] font-bold text-red-400 tracking-widest uppercase leading-none mt-1">TestGenAI</div>
+              <div className="text-[10px] font-bold text-red-400 tracking-widest uppercase leading-none mt-1">Smart Test Accelerator</div>
             </div>
           </NavLink>
           <button
@@ -215,7 +215,7 @@ function App() {
         </nav>
 
         {/* Bottom: Settings + User */}
-        {['admin', 'qa', 'manager'].includes((currentUser.role || 'user').toLowerCase()) && (
+        {['admin', 'qa_developer', 'manager'].includes((currentUser.role || 'user').toLowerCase()) && (
           <div className="px-3 py-3 space-y-0.5" style={{ borderTop: '1px solid var(--border-color)' }}>
             <NavLink
               to="/settings"
@@ -304,7 +304,7 @@ function App() {
                 {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
               </button>
 
-              {currentUser?.role?.toLowerCase() !== 'guest' && (
+              {currentUser?.role?.toLowerCase() !== 'user' && (
                 <button
                   onClick={() => navigate('/upload')}
                   className="hidden sm:flex items-center gap-2 px-4 py-2 primary-gradient rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
@@ -348,11 +348,11 @@ function App() {
         <footer className="hidden lg:flex items-center justify-between px-8 py-2 backdrop-blur-xl text-[11px] font-semibold z-20 relative" style={{ background: 'var(--bg-header)', borderTop: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> API Connected</span>
-            <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-blue-400" /> GitLab CI/CD Active</span>
-            <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-amber-400" /> Gemini 2.0 Flash</span>
+            <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-blue-400" /> GitHub Integration</span>
+            <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-amber-400" /> AI Engine Active</span>
           </div>
           <div className="flex items-center gap-6">
-            <span style={{ color: 'var(--text-muted)' }}>Devoteam TestGenAI v4.0.0</span>
+            <span style={{ color: 'var(--text-muted)' }}>Devoteam Smart Test Accelerator v4.0.0</span>
             <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"><TrendingUp className="w-3 h-3" /> System Optimal</span>
           </div>
         </footer>

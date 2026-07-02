@@ -25,7 +25,7 @@ with Session(engine) as session:
         if not session.query(models.Project).first():
             default_project = models.Project(
                 name="Default Project",
-                description="Automated initial project for Devoteam TestGenAI"
+                description="Automated initial project for Devoteam Smart Test Accelerator"
             )
             session.add(default_project)
             session.commit()
@@ -46,7 +46,7 @@ with Session(engine) as session:
         print(f"⚠ Seeding skipped or failed: {e}")
 
 app = FastAPI(
-    title="Devoteam TestGenAI API",
+    title="Devoteam Smart Test Accelerator API",
     version="4.0.0",
     description="AI-Driven Quality Engineering Platform by Devoteam"
 )
@@ -70,7 +70,7 @@ app.include_router(users_router, prefix="/api/users", tags=["users"])
 @app.get("/")
 async def root():
     return {
-        "message": "Welcome to Devoteam TestGenAI API",
+        "message": "Welcome to Devoteam Smart Test Accelerator API",
         "status": "online",
         "version": "4.0.0"
     }
@@ -81,7 +81,7 @@ async def health_check():
         "status": "healthy",
         "version": "4.0.0",
         "ai_model": "gemini-2.0-flash",
-        "platform": "Devoteam TestGenAI"
+        "platform": "Devoteam Smart Test Accelerator"
     }
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ export default function ExecutionHistory() {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
 
-  useEffect(() => { (async () => { try { const d = await apiService.getExecutions(); setExecutions(d || []); } catch {} finally { setIsLoading(false); } })(); }, []);
+  useEffect(() => { (async () => { try { const d = await apiService.getExecutions(); setExecutions(d || []); } catch { } finally { setIsLoading(false); } })(); }, []);
 
   const filtered = executions.filter(e => {
     const st = (e.status || '').toLowerCase();

@@ -34,7 +34,7 @@ export default class ErrorBoundary extends React.Component {
             </pre>
             <button
               onClick={() => window.location.reload()}
-              className="inline-flex items-center gap-2 px-6 py-3 primary-gradient text-[var(--text-primary)] rounded-xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
+              className="inline-flex items-center gap-2 px-6 py-3 primary-gradient text-white rounded-xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
             >
               <RotateCcw className="w-4 h-4" />
               Reload Application

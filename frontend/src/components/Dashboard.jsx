@@ -7,10 +7,10 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 const STAT_CARDS = [
-  { label: 'Total Test Runs', key: 'total_runs', default: 0, icon: Play, bg: 'rgba(237, 28, 36, 0.1)', iconColor: '#ED1C24' },
-  { label: 'Passed Tests', key: 'total_passed', default: 0, icon: CheckCircle2, bg: 'rgba(16, 185, 129, 0.1)', iconColor: '#34D399' },
-  { label: 'Failed Tests', key: 'total_failed', default: 0, icon: XCircle, bg: 'rgba(239, 68, 68, 0.1)', iconColor: '#F87171' },
-  { label: 'Accuracy Score', key: 'accuracy', default: 0, icon: Target, bg: 'rgba(139, 92, 246, 0.1)', iconColor: '#A78BFA', suffix: '%' },
+  { label: 'Projets Créés', key: 'total_projects', default: 0, icon: FolderDot, bg: 'rgba(99, 102, 241, 0.1)', iconColor: '#818CF8' },
+  { label: 'US Traitées', key: 'total_requirements', default: 0, icon: FileText, bg: 'rgba(245, 158, 11, 0.1)', iconColor: '#FBBF24' },
+  { label: 'Scénarios Générés', key: 'total_scenarios', default: 0, icon: Zap, bg: 'rgba(16, 185, 129, 0.1)', iconColor: '#34D399' },
+  { label: 'Code Implémenté', key: 'total_scripts', default: 0, icon: Play, bg: 'rgba(237, 28, 36, 0.1)', iconColor: '#ED1C24' },
 ];
 
 const staggerContainer = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.07 } } };
@@ -92,7 +92,7 @@ const Dashboard = ({ currentUser, onNewRequirement }) => {
           return (
             <motion.div key={card.key} variants={staggerItem}>
               <div className="card p-5 transition-all duration-300 group cursor-default relative overflow-hidden">
-                <div className="flex items-start justify-between mb-4 relative z-10">
+          <div className="flex items-start justify-between mb-4 relative z-10">
                   <div className="p-2.5 rounded-xl" style={{ background: card.bg }}>
                     <Icon className="w-5 h-5" style={{ color: card.iconColor }} />
                   </div>
@@ -189,7 +189,7 @@ const Dashboard = ({ currentUser, onNewRequirement }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <motion.div variants={staggerItem} className="card p-6 space-y-3">
           <h3 className="text-[16px] font-bold text-[var(--text-primary)] mb-5">Quick Actions</h3>
-          {currentUser?.role?.toLowerCase() === 'guest' ? (
+          {currentUser?.role?.toLowerCase() === 'user' ? (
             <div className="text-center py-8 opacity-60">
               <Shield className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
               <p className="text-sm font-bold text-[var(--text-secondary)]">Restricted Access</p>

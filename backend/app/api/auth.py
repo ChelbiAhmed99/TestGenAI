@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
 
-ALLOWED_SELF_REGISTER_ROLES = {"qa", "manager", "guest"}
+ALLOWED_SELF_REGISTER_ROLES = {"qa_developer", "manager", "user"}
 
 @router.post("/register", response_model=schemas.User)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -21,7 +21,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Username already registered")
 
     # Determine the requested role — block admin self-registration
-    requested_role = (user.role or "qa").lower().strip()
+    requested_role = (user.role or "qa_developer").lower().strip()
     if requested_role == "admin":
         raise HTTPException(
             status_code=403,
@@ -33,7 +33,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     try:
         role_enum = models.UserRole(requested_role)
     except ValueError:
-        role_enum = models.UserRole.QA
+        role_enum = models.UserRole.QA_DEVELOPER
 
     hashed_password = get_password_hash(user.password)
 

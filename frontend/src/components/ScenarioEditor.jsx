@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Copy, RotateCcw, ChevronRight, CheckCircle, Zap, Loader2, AlertCircle, Code2, FileCode, Terminal, Download, GitBranch, X, ExternalLink } from 'lucide-react';
+import { Play, Copy, RotateCcw, ChevronRight, CheckCircle, Zap, Loader2, AlertCircle, Code2, FileCode, Terminal, Download, GitBranch, X, ExternalLink, MessageSquare, ThumbsUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { apiService } from '../services/api';
 import { useSearchParams } from 'react-router-dom';
@@ -25,6 +25,10 @@ export default function ScenarioEditor() {
   const [isEditingGherkin, setIsEditingGherkin] = useState(false);
   const [editedGherkin, setEditedGherkin] = useState('');
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [showReviewPanel, setShowReviewPanel] = useState(false);
+  const [reviewPrompt, setReviewPrompt] = useState('');
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [isValidated, setIsValidated] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -64,7 +68,7 @@ export default function ScenarioEditor() {
     const tid = toast.loading('Pushing script to GitHub repository…');
     try {
       const res = await apiService.pushToGithub(selected.id);
-      toast.success(res.message || 'Successfully pushed to GitHub!', { id: tid });
+      toast.success(res.message || 'Successfully pushed to GitHub!', { id: tid, duration: 6000 });
     } catch (e) { toast.error(e.message || 'GitHub push failed', { id: tid }); }
     finally { setIsPushing(false); }
   };
@@ -93,6 +97,33 @@ export default function ScenarioEditor() {
       toast.success('TypeScript code generated!', { id: tid });
     } catch (e) { toast.error(e.message || 'Generation failed', { id: tid }); }
     finally { setIsGeneratingCode(false); }
+  };
+
+  const handleValidate = () => {
+    setIsValidated(true);
+    toast.success(view === 'gherkin' ? 'Scénario validé ✅' : 'Code validé ✅');
+  };
+
+  const handleReview = async () => {
+    if (!reviewPrompt.trim()) return;
+    setIsReviewing(true);
+    const tid = toast.loading('AI is reviewing and improving...');
+    try {
+      const content = view === 'gherkin' ? (selected?.gherkin_content || '') : (script?.code || '');
+      const res = view === 'gherkin'
+        ? await apiService.reviewScenario(content, reviewPrompt)
+        : await apiService.reviewCode(content, reviewPrompt);
+      if (res.improved_content) {
+        if (view === 'gherkin') {
+          setEditedGherkin(res.improved_content);
+          setIsEditingGherkin(true);
+        } else {
+          setScript({ ...script, code: res.improved_content });
+        }
+        toast.success('Review complete! Check the improved version.', { id: tid });
+      }
+    } catch (e) { toast.error(e.message || 'Review failed', { id: tid }); }
+    finally { setIsReviewing(false); setReviewPrompt(''); setShowReviewPanel(false); }
   };
 
   const getContent = () => view === 'gherkin' ? selected?.gherkin_content || '' : script?.code || '';
@@ -150,16 +181,14 @@ export default function ScenarioEditor() {
 
         <div className="card p-5 space-y-3 bg-[var(--bg-card)]">
           <div className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Execution</div>
-          <button onClick={runTest} disabled={isRunning || !script} className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl primary-gradient disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-primary)] text-sm font-bold transition-all active:scale-[0.98] hover:opacity-90">
+          <button onClick={runTest} disabled={isRunning || !script} className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl primary-gradient disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold transition-all active:scale-[0.98] hover:opacity-90">
             {isRunning ? <><Loader2 className="w-4 h-4 animate-spin" /> Running…</> : <><Play className="w-4 h-4 fill-white" /> Run in Docker</>}
           </button>
-          {!script && (
-            <div className="pt-2">
-              <button onClick={generateCode} disabled={isGeneratingCode || !selected} className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-[13px] font-bold transition-all active:scale-[0.98]">
-                {isGeneratingCode ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating Code…</> : <><Code2 className="w-4 h-4" /> Generate Playwright Code</>}
-              </button>
-            </div>
-          )}
+          <div className="pt-1">
+            <button onClick={generateCode} disabled={isGeneratingCode || !selected} className={`w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl border disabled:opacity-50 disabled:cursor-not-allowed text-[13px] font-bold transition-all active:scale-[0.98] ${script ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'}`}>
+              {isGeneratingCode ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating Code…</> : <><Code2 className="w-4 h-4" /> {script ? 'Regenerate Code' : 'Generate Playwright Code'}</>}
+            </button>
+          </div>
         </div>
 
         <div className="card p-5 bg-[var(--bg-card)]">
@@ -179,7 +208,7 @@ export default function ScenarioEditor() {
         <div className="card overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-card)]">
             <div className="flex items-center gap-1 bg-[var(--bg-hover)] border border-[var(--border-color)] rounded-xl p-1">
-              {VIEWS.map((v) => (<button key={v.id} onClick={() => setView(v.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-bold transition-all ${view === v.id ? 'bg-red-600 text-[var(--text-primary)] shadow-md' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'}`}><v.icon className="w-4 h-4" />{v.label}</button>))}
+              {VIEWS.map((v) => (<button key={v.id} onClick={() => setView(v.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-bold transition-all ${view === v.id ? 'bg-red-600 text-white shadow-md' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'}`}><v.icon className="w-4 h-4" />{v.label}</button>))}
             </div>
             <button onClick={() => { navigator.clipboard.writeText(getContent()); toast.success('Copied!'); }} className="flex items-center gap-1.5 px-3 py-2 text-[12px] font-bold text-[var(--text-secondary)] bg-[var(--bg-hover)] border border-[var(--border-color)] hover:bg-[var(--bg-hover)] rounded-lg transition-all"><Copy className="w-3.5 h-3.5" /> Copy</button>
           </div>
@@ -220,6 +249,56 @@ export default function ScenarioEditor() {
               )}
             </div>
           </div>
+
+          {/* ── Valider / Review Buttons ── */}
+          <div className="flex items-center justify-between px-6 py-3 border-t border-[var(--border-color)] bg-[var(--bg-card)]">
+            <div className="flex items-center gap-2">
+              {isValidated && (
+                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                  <CheckCircle className="w-3.5 h-3.5" /> Validé
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowReviewPanel(!showReviewPanel)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all active:scale-[0.98]"
+              >
+                <MessageSquare className="w-4 h-4" /> Review
+              </button>
+              <button
+                onClick={handleValidate}
+                disabled={isValidated}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                <ThumbsUp className="w-4 h-4" /> Valider
+              </button>
+            </div>
+          </div>
+
+          {/* ── Review Panel ── */}
+          <AnimatePresence>
+            {showReviewPanel && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-[var(--border-color)]">
+                <div className="p-5 bg-[var(--bg-card)] space-y-3">
+                  <div className="text-[11px] font-black text-amber-400 uppercase tracking-widest">🔄 AI Review — Describe your improvement</div>
+                  <textarea
+                    rows={3}
+                    value={reviewPrompt}
+                    onChange={(e) => setReviewPrompt(e.target.value)}
+                    placeholder={view === 'gherkin' ? 'Ex: Ajouter des scénarios négatifs, couvrir les cas edge...' : 'Ex: Ajouter des assertions, utiliser des data-testid...'}
+                    className="w-full bg-[var(--bg-input)] border border-[var(--border-color)] rounded-xl px-4 py-3 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-faint)] outline-none focus:border-amber-500 resize-none"
+                  />
+                  <div className="flex justify-end gap-3">
+                    <button onClick={() => setShowReviewPanel(false)} className="px-4 py-2 text-[13px] font-bold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] rounded-xl transition-colors">Annuler</button>
+                    <button onClick={handleReview} disabled={isReviewing || !reviewPrompt.trim()} className="flex items-center gap-2 px-5 py-2 primary-gradient text-white text-[13px] font-bold rounded-xl transition-all hover:opacity-90 disabled:opacity-50">
+                      {isReviewing ? <><Loader2 className="w-4 h-4 animate-spin" /> Reviewing...</> : <><Zap className="w-4 h-4" /> Send to AI</>}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <AnimatePresence>

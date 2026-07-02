@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/Version-1.0.0-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
   
-  <h1>TestGenAI</h1>
+  <h1>Smart Test Accelerator</h1>
   <h3>Plateforme Entreprise d'Ingénierie Qualité Augmentée par l'IA</h3>
   <p><em>Projet de Fin d'Études (PFE) - Génération automatisée de pipelines de tests de bout en bout</em></p>
 </div>
@@ -12,7 +12,7 @@
 
 ## À propos du projet
 
-**TestGenAI** est une solution innovante conçue pour combler le fossé entre les exigences métiers et l'automatisation des tests. En exploitant la puissance des LLM (Large Language Models), la plateforme est capable d'ingérer une simple *User Story* (texte, PDF ou ticket Jira) et de générer un pipeline de test complet (Gherkin + Playwright/TypeScript) exécutable et déployable instantanément sur GitLab CI.
+**Smart Test Accelerator** est une solution innovante conçue pour combler le fossé entre les exigences métiers et l'automatisation des tests. En exploitant la puissance des LLM (Large Language Models), la plateforme est capable d'ingérer une simple *User Story* (texte, PDF ou ticket Jira) et de générer un pipeline de test complet (Gherkin + Playwright/TypeScript) exécutable et déployable instantanément sur GitLab CI.
 
 Ce projet a été développé dans le cadre d'un **Projet de Fin d'Études (PFE)**, avec pour objectif de proposer une architecture robuste, scalable, et prête pour un environnement de production d'entreprise (SaaS).
 
@@ -45,7 +45,7 @@ L'application repose sur une architecture **Monorepo** moderne et découplée :
 ## Architecture du Monorepo
 
 ```text
-TestGenAI/
+SmartTestAccelerator/
 ├── core/                # Moteur d'Intelligence Artificielle (Python/Langchain)
 ├── backend/             # API Core de la plateforme (FastAPI)
 ├── frontend/            # Interface Web (React / Vite)
@@ -67,7 +67,7 @@ TestGenAI/
 ### 1. Configuration de l'environnement
 ```bash
 git clone <votre-repo-url>
-cd TestGenAI
+cd SmartTestAccelerator
 
 # Dupliquer et configurer le fichier d'environnement
 cp .env.example .env

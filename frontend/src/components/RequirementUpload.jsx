@@ -28,11 +28,27 @@ export default function RequirementUpload({ onAnalysisComplete }) {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [analyzedId, setAnalyzedId] = useState(null);
 
-  const handleFile = (file) => {
+  const handleFile = async (file) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => { setContent(e.target.result); if (!title) setTitle(file.name.replace(/\.[^.]+$/, '')); setUploadedFile(file); toast.success(`"${file.name}" loaded`); };
-    reader.readAsText(file);
+    if (!title) setTitle(file.name.replace(/\.[^.]+$/, ''));
+    setUploadedFile(file);
+
+    if (file.name.toLowerCase().endsWith('.pdf')) {
+      // Use server-side PDF extraction
+      const tid = toast.loading('Extracting text from PDF...');
+      try {
+        const res = await apiService.uploadPdf(file);
+        setContent(res.extracted_text);
+        toast.success(`PDF parsed: ${res.char_count} characters extracted`, { id: tid });
+      } catch (e) {
+        toast.error(e.message || 'Failed to parse PDF', { id: tid });
+      }
+    } else {
+      // Text-based files
+      const reader = new FileReader();
+      reader.onload = (e) => { setContent(e.target.result); toast.success(`"${file.name}" loaded`); };
+      reader.readAsText(file);
+    }
   };
 
   const handleAnalysis = async () => {
@@ -68,7 +84,7 @@ export default function RequirementUpload({ onAnalysisComplete }) {
             return (
               <React.Fragment key={s.id}>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-500 ${isDone ? 'bg-emerald-500 text-[var(--text-primary)] shadow-lg shadow-emerald-500/25' : isActive ? 'bg-red-600 text-[var(--text-primary)] shadow-lg shadow-red-500/25' : 'bg-[var(--bg-hover)] text-[var(--text-muted)]'}`}>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-500 ${isDone ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25' : isActive ? 'bg-red-600 text-white shadow-lg shadow-red-500/25' : 'bg-[var(--bg-hover)] text-[var(--text-muted)]'}`}>
                     {isDone ? <CheckCircle2 className="w-5 h-5" /> : s.id}
                   </div>
                   <div className="hidden sm:block">
@@ -95,7 +111,7 @@ export default function RequirementUpload({ onAnalysisComplete }) {
                     <button key={type.id} onClick={() => setSelectedType(type.id)}
                       className={`relative p-6 rounded-2xl border-2 text-left transition-all group active:scale-[0.98] ${isSel ? 'bg-[var(--bg-hover)]' : 'border-[var(--border-color)] bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)]'}`}
                       style={isSel ? { borderColor: type.border } : { borderColor: 'transparent' }}>
-                      {isSel && <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center"><CheckCircle2 className="w-3 h-3 text-[var(--text-primary)]" /></div>}
+                      {isSel && <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center"><CheckCircle2 className="w-3 h-3 text-white" /></div>}
                       <div className="w-12 h-12 rounded-xl mb-5 flex items-center justify-center" style={{ background: isSel ? type.bg : 'rgba(255,255,255,0.04)' }}>
                         <Icon className="w-6 h-6" style={{ color: isSel ? type.iconColor : '#64748B' }} />
                       </div>
@@ -106,7 +122,7 @@ export default function RequirementUpload({ onAnalysisComplete }) {
                 })}
               </div>
               <div className="flex justify-end mt-8">
-                <button onClick={() => setStep(2)} className="flex items-center gap-2 px-6 py-3 primary-gradient text-[var(--text-primary)] text-sm font-bold rounded-xl transition-all active:scale-[0.98] hover:opacity-90">Continue <ArrowRight className="w-4 h-4" /></button>
+                <button onClick={() => setStep(2)} className="flex items-center gap-2 px-6 py-3 primary-gradient text-white text-sm font-bold rounded-xl transition-all active:scale-[0.98] hover:opacity-90">Continue <ArrowRight className="w-4 h-4" /></button>
               </div>
             </div>
           </motion.div>
@@ -148,7 +164,7 @@ export default function RequirementUpload({ onAnalysisComplete }) {
               </div>
               <div className="flex items-center justify-between mt-8 pt-6 border-t border-[var(--border-color)]">
                 <button onClick={() => setStep(1)} className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-xl transition-all"><ArrowLeft className="w-4 h-4" /> Back</button>
-                <button onClick={handleAnalysis} disabled={!title.trim() || !content.trim()} className="flex items-center gap-2 px-7 py-3 primary-gradient disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-primary)] text-sm font-bold rounded-xl transition-all active:scale-[0.98] hover:opacity-90"><Zap className="w-4 h-4" />Start AI Analysis</button>
+                <button onClick={handleAnalysis} disabled={!title.trim() || !content.trim()} className="flex items-center gap-2 px-7 py-3 primary-gradient disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all active:scale-[0.98] hover:opacity-90"><Zap className="w-4 h-4" />Start AI Analysis</button>
               </div>
             </div>
           </motion.div>
@@ -161,18 +177,18 @@ export default function RequirementUpload({ onAnalysisComplete }) {
                 <div className="flex flex-col items-center gap-6">
                   <div className="relative w-24 h-24">
                     <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-20" />
-                    <div className="relative w-full h-full rounded-full primary-gradient flex items-center justify-center shadow-xl shadow-red-500/30"><Loader2 className="w-10 h-10 text-[var(--text-primary)] animate-spin" /></div>
+                    <div className="relative w-full h-full rounded-full primary-gradient flex items-center justify-center shadow-xl shadow-red-500/30"><Loader2 className="w-10 h-10 text-white animate-spin" /></div>
                   </div>
                   <div><h3 className="text-xl font-bold text-[var(--text-primary)]">AI Engine Processing</h3><p className="text-sm text-[var(--text-secondary)] mt-2 max-w-sm mx-auto">Generating Gherkin scenarios & Playwright scripts…</p></div>
                   <div className="w-full max-w-xs bg-white/[0.06] rounded-full h-1.5 overflow-hidden"><motion.div className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full" initial={{ width: '0%' }} animate={{ width: '85%' }} transition={{ duration: 3.5, ease: 'easeInOut' }} /></div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-6">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-xl shadow-emerald-500/30"><CheckCircle2 className="w-12 h-12 text-[var(--text-primary)]" /></div>
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-xl shadow-emerald-500/30"><CheckCircle2 className="w-12 h-12 text-white" /></div>
                   <div><h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">Analysis Complete!</h3><p className="text-sm text-[var(--text-secondary)] mt-2 max-w-sm mx-auto">Gherkin scenarios and test scripts are ready.</p></div>
                   <div className="flex items-center gap-4 mt-2">
                     <button onClick={() => { setStep(1); setTitle(''); setContent(''); setUploadedFile(null); }} className="px-6 py-3 text-sm font-bold text-[var(--text-secondary)] bg-[var(--bg-hover)] border border-[var(--border-color)] hover:bg-white/[0.08] rounded-xl transition-all">Analyze Another</button>
-                    <button onClick={() => onAnalysisComplete(analyzedId)} className="flex items-center gap-2 px-6 py-3 primary-gradient text-[var(--text-primary)] text-sm font-bold rounded-xl transition-all active:scale-[0.98] hover:opacity-90">Open in Editor <ArrowRight className="w-4 h-4" /></button>
+                    <button onClick={() => onAnalysisComplete(analyzedId)} className="flex items-center gap-2 px-6 py-3 primary-gradient text-white text-sm font-bold rounded-xl transition-all active:scale-[0.98] hover:opacity-90">Open in Editor <ArrowRight className="w-4 h-4" /></button>
                   </div>
                 </div>
               )}
